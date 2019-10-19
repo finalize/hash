@@ -1,32 +1,30 @@
 version: "3.3"
 
 services:
-  mysql:
-    image: mysql:latest
-    ports:
-      - "3306:3306"
-    volumes:
-      - "mysql-data:/var/lib/mysql"
-      - "./mysql/init:/docker-entrypoint-initdb.d"
-    env_file:
-      - db.env
-    environment:
-      - MYSQL_ROOT_PASSWORD
-    networks:
-      - api-default
-
   api:
-    build: .
+    build: "./src"
     ports:
       - "8080:8080"
     volumes:
-      - ".:/app"
+      - "./src:/app"
     working_dir: "/app"
     env_file:
-      - db.env
+      - ./env/db.env
     networks:
       - api-default
-    command: bash -c 'go mod download && go run main.go'
+
+  mysql:
+    build: "./mysql"
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql/log:/var/log/mysql"
+      - "mysql-data:/var/lib/mysql"
+      - "./mysql/init:/docker-entrypoint-initdb.d"
+    env_file:
+      - ./env/db.env
+    networks:
+      - api-default
 
 networks:
   api-default:
