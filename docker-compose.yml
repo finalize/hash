@@ -2,11 +2,11 @@ version: "3.3"
 
 services:
   api:
-    build: "./src"
+    build: "./api"
     ports:
       - "8080:8080"
     volumes:
-      - "./src:/app"
+      - "./api:/app"
     working_dir: "/app"
     env_file:
       - ./env/db.env
@@ -15,6 +15,7 @@ services:
 
   mysql:
     build: "./mysql"
+    restart: always
     ports:
       - "3306:3306"
     volumes:
