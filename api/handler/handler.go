@@ -2,10 +2,8 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
+	"encoding/json"
 	"net/http"
-
-	"github.com/jinzhu/gorm"
 )
 
 type apiHandler struct{}
@@ -13,7 +11,7 @@ type apiHandler struct{}
 type (
 	// Handler Handler
 	Handler struct {
-		DB *gorm.DB
+		DB *sql.DB
 	}
 )
 
@@ -24,17 +22,21 @@ const (
 
 // InitializeRouter Init Router
 func InitializeRouter(db *sql.DB, mux *http.ServeMux) *http.ServeMux {
-	mux.HandleFunc("/", handler)
+	user := NewUserHandler(db)
+
+	mux.HandleFunc("/signup", user.SignUp)
 	return mux
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {
 
-	fmt.Println(req)
+	resp := map[string]int{"user_id": 1}
 
 	if req.URL.Path != "/" {
 		http.NotFound(w, req)
 		return
 	}
-	fmt.Fprintf(w, "Welcome to the home page!")
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(resp)
 }
