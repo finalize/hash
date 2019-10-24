@@ -13,11 +13,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 RUN go get github.com/pilu/fresh
 
+RUN apt-get update -qq && \
+  apt-get install -y mariadb-client vim
+
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
-
-# Expose port 8080 to the outside world
-EXPOSE 8080
-
-# Command to run the executable
-CMD ["fresh"]
