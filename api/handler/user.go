@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/shgysd/hash/api/interfaces"
-	"github.com/shgysd/hash/api/model"
 	"github.com/shgysd/hash/api/repository"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 // NewUserHandler Initialize user repository
@@ -24,8 +25,11 @@ type UserHandler struct {
 	repo repository.UserRepository
 }
 
-type Message struct {
-	Data interface{} `json:"data"`
+type userJSON struct {
+	Name        string `json:"name" validate:"required"`         //必須パラメータ
+	DisplayName string `json:"display_name" validate:"required"` //必須パラメータ
+	Email       string `json:"email" validate:"required,email"`  //必須パラメータ、かつ、emailフォーマット
+	Password    string `json:"password" validate:"required"`
 }
 
 // SignUp sign up
@@ -38,17 +42,23 @@ func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal
-	var msg interface{}
-	err = json.Unmarshal(b, &msg)
+	var user userJSON
+	err = json.Unmarshal(b, &user)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	fmt.Println(msg)
+	validate := validator.New() //インスタンス生成
+	errors := validate.Struct(user)
+	if errors != nil {
+		log.Fatal(errors.Error())
+	}
 
-	var u model.User
-	h.repo.SignUp(&u)
+	fmt.Println(user)
+
+	// var u model.User
+	// h.repo.SignUp(&u)
 
 	resp := map[string]int{"user_id": 2}
 	// if err := h.repo.SignUp(u); err != nil {
