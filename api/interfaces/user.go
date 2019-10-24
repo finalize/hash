@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/shgysd/hash/api/model"
 	"github.com/shgysd/hash/api/repository"
@@ -21,6 +22,46 @@ type UserRepository struct {
 
 // SignUp SignUp
 func (h *UserRepository) SignUp(u *model.User) {
+
+	stmt, err := h.Conn.Prepare("INSERT INTO users(name, display_name, email, password) VALUES(?,?,?,?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	res, err := stmt.Exec("finalize", "display", "me@", "asdf") // => "INSERT INTO users(name) VALUES('Dolly')"
+	if err != nil {
+		log.Fatal(err)
+	}
+	lastID, err := res.LastInsertId() // 挿入した行のIDを返却
+	if err != nil {
+		log.Fatal(err)
+	}
+	rowCnt, err := res.RowsAffected() // 影響を受けた行数
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var (
+		id   int
+		name string
+	)
+	rows, err := h.Conn.Query("SELECT id, name FROM users")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&id, &name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 
 	// Validate
 	// if u.Password == "" {

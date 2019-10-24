@@ -14,10 +14,17 @@ var db *sql.DB
 // New Connect to MySQL
 func New(d *config.Config) *sql.DB {
 	connectionString := getConnectionString(d)
-	db, err := sql.Open("mysql", connectionString)
+	conn, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		panic(err.Error())
 	}
+
+	err = conn.Ping()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	db = conn
 
 	return db
 }
@@ -33,7 +40,7 @@ func GetDB() *sql.DB {
 }
 
 func getConnectionString(d *config.Config) string {
-	host := getParamString("MYSQL_DB_HOST", d.MySQL.Host)
+	host := getParamString("MYSQL_DB_HOST", "mysql")
 	port := getParamString("MYSQL_PORT", "3306")
 	user := getParamString("MYSQL_USER", d.MySQL.User)
 	pass := getParamString("MYSQL_PASSWORD", d.MySQL.Password)
