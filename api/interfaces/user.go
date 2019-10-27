@@ -6,6 +6,7 @@ import (
 
 	"github.com/shgysd/hash/api/repository"
 	"github.com/shgysd/hash/api/types"
+	"github.com/shgysd/hash/api/utils/crypto"
 )
 
 // NewUserRepo Initialize user repository
@@ -22,12 +23,15 @@ type UserRepository struct {
 
 // SignUp SignUp
 func (h *UserRepository) SignUp(j *types.SignUp) int64 {
-
 	stmt, err := h.Conn.Prepare("INSERT INTO users(name, display_name, email, password) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err := stmt.Exec(j.Name, j.DisplayName, j.Email, j.Password) // => "INSERT INTO users(name) VALUES('Dolly')"
+
+	pwd := []byte(j.Password)
+	hashedPassword := crypto.HashAndSalt(pwd)
+
+	res, err := stmt.Exec(j.Name, j.DisplayName, j.Email, hashedPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
