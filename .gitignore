@@ -13,8 +13,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-db.env
+
 .DS_Store
 
 node_modules
 api/tmp/runner-build
+
+env/
