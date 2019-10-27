@@ -6,7 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/shgysd/hash/api/interfaces"
 	"github.com/shgysd/hash/api/repository"
 	"github.com/shgysd/hash/api/types"
@@ -50,7 +53,23 @@ func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	id := h.repo.SignUp(&data)
 
-	resp := map[string]interface{}{"user_id": id}
+	// headerのセット
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	// claimsのセット
+	claims := token.Claims.(jwt.MapClaims)
+	claims["admin"] = true
+	claims["sub"] = id
+	claims["iat"] = time.Now()
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+
+	// 電子署名
+	tokenString, err := token.SignedString([]byte(os.Getenv("KEY")))
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	resp := map[string]interface{}{"token": tokenString}
 	// if err := h.repo.SignUp(u); err != nil {
 	// 	return err
 	// }
