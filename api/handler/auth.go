@@ -12,6 +12,12 @@ import (
 // GetTokenHandler get token
 var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("405 Method Not Allowed"))
+		return
+	}
+
 	// headerのセット
 	token := jwt.New(jwt.SigningMethodHS256)
 

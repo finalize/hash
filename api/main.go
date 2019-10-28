@@ -22,7 +22,7 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
-	handler.InitializeRouter(db, mux)
+	handler.NewRouter(mux, db)
 	fmt.Println("server is listening on port 8080")
 	http.ListenAndServe(":8080", mux)
 }

@@ -16,20 +16,27 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-// UserHandler Handler with DB
+// UserHandler user handler
 type UserHandler struct {
 	repo repository.UserRepository
 }
 
-// NewUserHandler Initialize user repository
+// NewUserHandler Initialize user handler
 func NewUserHandler(conn *sql.DB) *UserHandler {
 	return &UserHandler{
 		repo: interfaces.NewUserRepo(conn),
 	}
 }
 
-// SignUp sign up
+// SignUp crate a user
 func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Write([]byte("405 Method Not Allowed"))
+		return
+	}
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -41,55 +48,53 @@ func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	var data types.SignUp
 	err = json.Unmarshal(b, &data)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	validate := validator.New() //インスタンス生成
-	errors := validate.Struct(data)
-	if errors != nil {
-		log.Println(errors.Error())
+	validate := validator.New()
+	err = validate.Struct(data)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), 500)
+		return
 	}
 
+	// Insert data to db
 	id := h.repo.SignUp(&data)
 
-	// headerのセット
+	// Create token
 	token := jwt.New(jwt.SigningMethodHS256)
 
-	// claimsのセット
+	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
 	claims["admin"] = true
 	claims["sub"] = id
 	claims["iat"] = time.Now()
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
-	// 電子署名
+	// Create signed token
 	tokenString, err := token.SignedString([]byte(os.Getenv("KEY")))
 	if err != nil {
 		log.Println(err.Error())
 	}
 
 	resp := map[string]interface{}{"token": tokenString}
-	// if err := h.repo.SignUp(u); err != nil {
-	// 	return err
-	// }
-
-	// if u.Email != "" || u.Password != "" {
-
-	// 	token := jwt.New(jwt.SigningMethodHS256)
-	// 	claims := token.Claims.(jwt.MapClaims)
-	// 	claims["admin"] = true
-	// 	claims["hashID"] = u.HashID
-	// 	claims["displayName"] = u.DisplayName
-	// 	claims["iat"] = time.Now()
-	// 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-	// 	tokenString, _ := token.SignedString([]byte(Key))
-	// 	data := map[string]interface{}{"token": tokenString}
-
-	// 	return c.JSON(http.StatusCreated, data)
-	// }
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(resp)
+	return
+}
+
+// SignIn login
+func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Header().Set("Access-Control-Allow-Method", "POST")
+		w.Write([]byte("405 Method Not Allowed"))
+		return
+	}
+
 }
