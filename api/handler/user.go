@@ -97,4 +97,28 @@ func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// Unmarshal
+	var data types.SignIn
+	err = json.Unmarshal(b, &data)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(data)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
 }

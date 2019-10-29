@@ -6,3 +6,8 @@ type SignUp struct {
 	Email       string `json:"email" validate:"required,email"` //必須パラメータ、かつ、emailフォーマット
 	Password    string `json:"password" validate:"required"`
 }
+
+type SignIn struct {
+	ID       string `json:"id" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
