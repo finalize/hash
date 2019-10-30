@@ -10,7 +10,7 @@ func NewRouter(mux *http.ServeMux, db *sql.DB) *http.ServeMux {
 	user := NewUserHandler(db)
 
 	mux.Handle("/signup", JWTMiddleware.Handler(http.HandlerFunc(user.SignUp)))
-	mux.Handle("/signin", JWTMiddleware.Handler(http.HandlerFunc(user.SignIn)))
+	mux.Handle("/signin", http.HandlerFunc(user.SignIn))
 	mux.Handle("/token", GetTokenHandler)
 	return mux
 }

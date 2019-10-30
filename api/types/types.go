@@ -8,6 +8,6 @@ type SignUp struct {
 }
 
 type SignIn struct {
-	ID       string `json:"id" validate:"required"`
+	ID       int `json:"id" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }

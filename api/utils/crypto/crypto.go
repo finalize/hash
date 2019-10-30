@@ -16,12 +16,11 @@ func HashAndSalt(pwd []byte) string {
 }
 
 // ComparePasswords ハッシュ化されたパスワードと入力されたパスワードを比較する
-func ComparePasswords(hashedPwd string, plainPwd []byte) bool {
+func ComparePasswords(hashedPwd string, plainPwd []byte) (bool, error) {
 	byteHash := []byte(hashedPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
 	if err != nil {
-		log.Println(err)
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
 }

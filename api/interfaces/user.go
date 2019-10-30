@@ -21,17 +21,17 @@ type UserRepository struct {
 	Conn *sql.DB
 }
 
-// SignUp SignUp
-func (h *UserRepository) SignUp(j *types.SignUp) int64 {
+// SignUp create a user
+func (h *UserRepository) SignUp(b *types.SignUp) int64 {
 	stmt, err := h.Conn.Prepare("INSERT INTO users(name, display_name, email, password) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pwd := []byte(j.Password)
+	pwd := []byte(b.Password)
 	hashedPassword := crypto.HashAndSalt(pwd)
 
-	res, err := stmt.Exec(j.Name, j.DisplayName, j.Email, hashedPassword)
+	res, err := stmt.Exec(b.Name, b.DisplayName, b.Email, hashedPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,47 +44,41 @@ func (h *UserRepository) SignUp(j *types.SignUp) int64 {
 		log.Fatal(err)
 	}
 
-	// var (
-	// 	id   int
-	// 	name string
-	// )
-	// rows, err := h.Conn.Query("SELECT id, name FROM users")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer rows.Close()
-	// for rows.Next() {
-	// 	err := rows.Scan(&id, &name)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	log.Println(id, name)
-	// }
-	// err = rows.Err()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 
 	return lastID
+}
 
-	// Validate
-	// if u.Password == "" {
-	// 	return echo.NewHTTPError(http.StatusUnauthorized, "Please provide valid cred")
-	// }
+// SignIn user login
+func (h *UserRepository) SignIn(b *types.SignIn) int {
+	var (
+		id       int
+		name     string
+		password string
+	)
+	rows, err := h.Conn.Query("SELECT id, name, password FROM users WHERE id = ?", b.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &password)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// pwd := []byte(u.Password)
-	// hash := common.HashAndSalt(pwd)
-	// hashID := u.HashID
+	pwd := []byte(b.Password)
 
-	// u.HashID = hashID
-	// u.Password = hash
-	// if !h.Conn.NewRecord(&u) {
-	// 	panic("could not create new record")
-	// }
-	// if err := h.Conn.Create(&u).Error; err != nil {
-	// 	panic(err.Error())
-	// }
+	if _, err := crypto.ComparePasswords(password, pwd); err != nil {
+		log.Println(err.Error())
+		return 0
+	}
 
+	return id
 }
