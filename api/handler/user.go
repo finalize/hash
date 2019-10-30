@@ -10,6 +10,8 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/shgysd/hash/api/utils"
+	"github.com/shgysd/hash/api/utils/auth"
 	"github.com/shgysd/hash/api/interfaces"
 	"github.com/shgysd/hash/api/repository"
 	"github.com/shgysd/hash/api/types"
@@ -30,10 +32,7 @@ func NewUserHandler(conn *sql.DB) *UserHandler {
 
 // SignUp crate a user
 func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Write([]byte("405 Method Not Allowed"))
+	if utils.IsAllowMethod(w, r.Method, "POST") {
 		return
 	}
 
@@ -90,31 +89,16 @@ func (h *UserHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 // SignIn login
 func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Header().Set("Access-Control-Allow-Method", "POST")
-		w.Write([]byte("405 Method Not Allowed"))
+	if utils.IsAllowMethod(w, r.Method, "POST") {
 		return
 	}
 
-	b, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	// Unmarshal
 	var data types.SignIn
-	err = json.Unmarshal(b, &data)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), 500)
-		return
-	}
+
+	utils.UnmarshalBody(r.Body, &data)
 
 	validate := validator.New()
-	err = validate.Struct(data)
+	err := validate.Struct(data)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
@@ -124,26 +108,20 @@ func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	// Insert data to db
 	id := h.repo.SignIn(&data)
 
-	// Create token
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	// Set claims
-	claims := token.Claims.(jwt.MapClaims)
-	claims["admin"] = true
-	claims["sub"] = id
-	claims["iat"] = time.Now()
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-
 	// Create signed token
-	tokenString, err := token.SignedString([]byte(os.Getenv("KEY")))
+	tokenString, err := auth.CreateJSONWebToken(id)
 	if err != nil {
 		log.Println(err.Error())
 	}
-
 	resp := map[string]interface{}{"token": tokenString}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(resp)
 	return
+}
+
+// GetUser get a user
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+
 }

@@ -66,7 +66,6 @@ func (h *UserRepository) SignIn(b *types.SignIn) int {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(id, name)
 	}
 	err = rows.Err()
 	if err != nil {
