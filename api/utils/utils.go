@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/shgysd/hash/api/types"
 )
 
 // IsAllowMethod 許可してないメソッドを弾く
@@ -23,7 +21,7 @@ func IsAllowMethod(w http.ResponseWriter, r string, m string) bool {
 }
 
 // UnmarshalBody bodyをJSON化
-func UnmarshalBody(r io.ReadCloser, d *types.SignIn) error {
+func UnmarshalBody(r io.ReadCloser, d interface{}) error {
 	b, err := ioutil.ReadAll(r)
 	defer r.Close()
 	if err != nil {

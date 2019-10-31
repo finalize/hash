@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"fmt"
+	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/shgysd/hash/api/utils"
@@ -123,5 +125,20 @@ func (h *UserHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 // GetUser get a user
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	if utils.IsAllowMethod(w, r.Method, "GET") {
+		return
+	}
 
+	var data types.GetUser
+
+	utils.UnmarshalBody(r.Body, &data)
+	id := strings.TrimPrefix(r.URL.Path, "/users/")
+	fmt.Println(id)
+
+	resp := h.repo.GetUser(id)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(resp)
+	return 
 }

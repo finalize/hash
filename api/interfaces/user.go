@@ -3,6 +3,7 @@ package interfaces
 import (
 	"database/sql"
 	"log"
+	"fmt"
 
 	"github.com/shgysd/hash/api/repository"
 	"github.com/shgysd/hash/api/types"
@@ -80,4 +81,35 @@ func (h *UserRepository) SignIn(b *types.SignIn) int {
 	}
 
 	return id
+}
+
+// SignIn user login
+func (h *UserRepository) GetUser(i string) map[string]interface{} {
+	var (
+		id       int
+		name     string
+		display_name string
+	)
+	rows, err := h.Conn.Query("SELECT id, name, display_name FROM users WHERE id = ?", i)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &display_name)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(id, name, display_name)
+
+	resp := map[string]interface{}{"id": id, "name": name, "display_name": display_name}
+
+	return resp
 }
