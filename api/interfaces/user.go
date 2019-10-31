@@ -1,38 +1,45 @@
 package interfaces
 
 import (
-	"database/sql"
 	"log"
-	"fmt"
+
+	"database/sql"
 
 	"github.com/shgysd/hash/api/repository"
-	"github.com/shgysd/hash/api/types"
 	"github.com/shgysd/hash/api/utils/crypto"
 )
 
-// NewUserRepo Initialize user repository
+// UserRepository contains db
+type UserRepository struct {
+	Conn *sql.DB
+}
+
+type signUp struct {
+	Name        string `json:"name" validate:"required"`
+	DisplayName string `json:"displayName" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	Password    string `json:"password" validate:"required"`
+}
+
+// NewUserRepo returns user repository that contains db
 func NewUserRepo(conn *sql.DB) repository.UserRepository {
 	return &UserRepository{
 		Conn: conn,
 	}
 }
 
-// UserRepository Handler with DB
-type UserRepository struct {
-	Conn *sql.DB
-}
+// SignUp inserts user data into mysql
+func (h *UserRepository) SignUp(d *repository.SignUp) int {
 
-// SignUp create a user
-func (h *UserRepository) SignUp(b *types.SignUp) int64 {
 	stmt, err := h.Conn.Prepare("INSERT INTO users(name, display_name, email, password) VALUES(?,?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pwd := []byte(b.Password)
+	pwd := []byte(d.Password)
 	hashedPassword := crypto.HashAndSalt(pwd)
 
-	res, err := stmt.Exec(b.Name, b.DisplayName, b.Email, hashedPassword)
+	res, err := stmt.Exec(d.Name, d.DisplayName, d.Email, hashedPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,69 +54,24 @@ func (h *UserRepository) SignUp(b *types.SignUp) int64 {
 
 	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 
-	return lastID
-}
+	return int(lastID)
 
-// SignIn user login
-func (h *UserRepository) SignIn(b *types.SignIn) int {
-	var (
-		id       int
-		name     string
-		password string
-	)
-	rows, err := h.Conn.Query("SELECT id, name, password FROM users WHERE id = ?", b.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		err := rows.Scan(&id, &name, &password)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// if u.Password == "" {
+	// 	return echo.NewHTTPError(http.StatusUnauthorized, "Please provide valid cred")
+	// }
 
-	pwd := []byte(b.Password)
+	// pwd := []byte(u.Password)
+	// hash := common.HashAndSalt(pwd)
+	// hashID := u.HashID
 
-	if _, err := crypto.ComparePasswords(password, pwd); err != nil {
-		log.Println(err.Error())
-		return 0
-	}
+	// u.HashID = hashID
+	// u.Password = hash
+	// if !h.Conn.NewRecord(&u) {
+	// 	panic("could not create new record")
+	// }
+	// if err := h.Conn.Create(&u).Error; err != nil {
+	// 	panic(err.Error())
+	// }
 
-	return id
-}
-
-// SignIn user login
-func (h *UserRepository) GetUser(i string) map[string]interface{} {
-	var (
-		id       int
-		name     string
-		display_name string
-	)
-	rows, err := h.Conn.Query("SELECT id, name, display_name FROM users WHERE id = ?", i)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&id, &name, &display_name)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(id, name, display_name)
-
-	resp := map[string]interface{}{"id": id, "name": name, "display_name": display_name}
-
-	return resp
+	//return 3
 }

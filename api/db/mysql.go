@@ -11,7 +11,7 @@ import (
 
 var db *sql.DB
 
-// New Connect to MySQL
+// New returns sql.DB
 func New(d *config.Config) *sql.DB {
 	connectionString := getConnectionString(d)
 	conn, err := sql.Open("mysql", connectionString)
@@ -29,12 +29,7 @@ func New(d *config.Config) *sql.DB {
 	return db
 }
 
-// Init Migration
-func Init() {
-	return
-}
-
-// GetDB for getting db
+// GetDB returns sql.DB
 func GetDB() *sql.DB {
 	return db
 }

@@ -1,10 +1,14 @@
 package repository
 
-import "github.com/shgysd/hash/api/types"
+// SignUp contains default user info
+type SignUp struct {
+	Name        string `json:"name" validate:"required"`
+	DisplayName string `json:"displayName" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	Password    string `json:"password" validate:"required"`
+}
 
-// UserRepository Define user method
+// UserRepository defines user method
 type UserRepository interface {
-	SignUp(b *types.SignUp) int64
-	SignIn(b *types.SignIn) int
-	GetUser(b string) map[string]interface{}
+	SignUp(d *SignUp) int
 }

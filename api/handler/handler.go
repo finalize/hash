@@ -2,16 +2,27 @@ package handler
 
 import (
 	"database/sql"
-	"net/http"
+
+	"github.com/labstack/echo"
 )
 
 // NewRouter Init Router
-func NewRouter(mux *http.ServeMux, db *sql.DB) *http.ServeMux {
+func NewRouter(e *echo.Echo, db *sql.DB) *echo.Echo {
+	// config := config.New()
 	user := NewUserHandler(db)
+	// tag := NewTagHandler(db)
+	// auth := NewOAuthHandler(config, db)
 
-	mux.Handle("/signup", JWTMiddleware.Handler(http.HandlerFunc(user.SignUp)))
-	mux.Handle("/signin", http.HandlerFunc(user.SignIn))
-	mux.Handle("/users/", http.HandlerFunc(user.GetUser))
-	mux.Handle("/token", GetTokenHandler)
-	return mux
+	// Auth
+	e.POST("/signup", user.SignUp)
+	// e.POST("/login", user.Login)
+	// // Social login
+	// e.GET("/auth/twitter", auth.TwitterLogin())
+	// e.GET("/auth/twitter/callback", auth.TwitterCallback())
+	// // User
+	// e.GET("/users/:id", user.GetUser)
+	// e.POST("/users/:id/tags", user.CreateTag)
+	// // Tag
+	// e.GET("/tags/:name/users", tag.GetUsers)
+	return e
 }
