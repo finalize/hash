@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
+	"github.com/labstack/echo"
 	"github.com/shgysd/hash/api/config"
 	"github.com/shgysd/hash/api/db"
 	"github.com/shgysd/hash/api/handler"
@@ -21,8 +19,8 @@ func main() {
 	db := db.GetDB()
 	defer db.Close()
 
-	mux := http.NewServeMux()
-	handler.NewRouter(mux, db)
-	fmt.Println("server is listening on port 8080")
-	http.ListenAndServe(":8080", mux)
+	e := echo.New()
+	handler.NewRouter(e, db)
+	// Start server
+	e.Logger.Fatal(e.Start(":8080"))
 }
