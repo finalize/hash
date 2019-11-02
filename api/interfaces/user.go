@@ -14,13 +14,6 @@ type UserRepository struct {
 	Conn *sql.DB
 }
 
-type signUp struct {
-	Name        string `json:"name" validate:"required"`
-	DisplayName string `json:"displayName" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	Password    string `json:"password" validate:"required"`
-}
-
 // NewUserRepo returns user repository that contains db
 func NewUserRepo(conn *sql.DB) repository.UserRepository {
 	return &UserRepository{
@@ -28,7 +21,7 @@ func NewUserRepo(conn *sql.DB) repository.UserRepository {
 	}
 }
 
-// SignUp inserts user data into mysql
+// SignUp inserts user data into mysql and returns JWT
 func (h *UserRepository) SignUp(d *repository.SignUp) int {
 
 	stmt, err := h.Conn.Prepare("INSERT INTO users(name, display_name, email, password) VALUES(?,?,?,?)")
@@ -55,23 +48,37 @@ func (h *UserRepository) SignUp(d *repository.SignUp) int {
 	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 
 	return int(lastID)
+}
 
-	// if u.Password == "" {
-	// 	return echo.NewHTTPError(http.StatusUnauthorized, "Please provide valid cred")
-	// }
+// SignIn returns JWT
+func (h *UserRepository) SignIn(d *repository.SignIn) int {
+	var (
+		id       int
+		password string
+	)
+	rows, err := h.Conn.Query("SELECT id, password FROM users WHERE id = ?", d.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&id, &password)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(password)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// pwd := []byte(u.Password)
-	// hash := common.HashAndSalt(pwd)
-	// hashID := u.HashID
+	pwd := []byte(d.Password)
 
-	// u.HashID = hashID
-	// u.Password = hash
-	// if !h.Conn.NewRecord(&u) {
-	// 	panic("could not create new record")
-	// }
-	// if err := h.Conn.Create(&u).Error; err != nil {
-	// 	panic(err.Error())
-	// }
+	err = crypto.ComparePasswords(password, pwd)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	//return 3
+	return id
 }

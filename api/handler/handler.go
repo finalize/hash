@@ -15,6 +15,7 @@ func NewRouter(e *echo.Echo, db *sql.DB) *echo.Echo {
 
 	// Auth
 	e.POST("/signup", user.SignUp)
+	e.POST("/signin", user.SignIn)
 	// e.POST("/login", user.Login)
 	// // Social login
 	// e.GET("/auth/twitter", auth.TwitterLogin())

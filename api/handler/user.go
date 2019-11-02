@@ -17,13 +17,6 @@ type UserHandler struct {
 	repo repository.UserRepository
 }
 
-type signUp struct {
-	Name        string `json:"name" validate:"required"`
-	DisplayName string `json:"displayName" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	Password    string `json:"password" validate:"required"`
-}
-
 // NewUserHandler inits user handler
 func NewUserHandler(conn *sql.DB) *UserHandler {
 	return &UserHandler{
@@ -31,14 +24,14 @@ func NewUserHandler(conn *sql.DB) *UserHandler {
 	}
 }
 
-// SignUp creates a new user
+// SignUp creates a new user and returns JWT
 func (h *UserHandler) SignUp(c echo.Context) (err error) {
-	data := &repository.SignUp{}
-	if err := c.Bind(data); err != nil {
+	var data repository.SignUp
+	if err := c.Bind(&data); err != nil {
 		return err
 	}
 
-	id := h.repo.SignUp(data)
+	id := h.repo.SignUp(&data)
 
 	tokenString, err := auth.CreateJSONWebToken(id)
 	if err != nil {
@@ -46,5 +39,26 @@ func (h *UserHandler) SignUp(c echo.Context) (err error) {
 		return err
 	}
 	resp := map[string]interface{}{"token": tokenString}
+	return c.JSON(http.StatusCreated, resp)
+}
+
+// SignIn returns JWT
+func (h *UserHandler) SignIn(c echo.Context) (err error) {
+	var data repository.SignIn
+	var token string
+	if err = c.Bind(&data); err != nil {
+		return
+	}
+
+	id := h.repo.SignIn(&data)
+
+	token, err = auth.CreateJSONWebToken(id)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
+	resp := map[string]interface{}{"token": token}
+
 	return c.JSON(http.StatusCreated, resp)
 }
